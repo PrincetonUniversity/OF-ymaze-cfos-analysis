@@ -41,6 +41,8 @@ The raw data will be available on DataSpace.
 1. https://github.com/PrincetonUniversity/MouseMotionMapper
 2. https://github.com/gordonberman/MotionMapper
 3. https://github.com/talmo/leap
+4. https://github.com/PrincetonUniversity/ClearMapCluster
+5. https://github.com/PrincetonUniversity/lightsheet_helper_scripts
 
 ## License
 This work is published under the MIT license.  
