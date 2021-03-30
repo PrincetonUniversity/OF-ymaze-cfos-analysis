@@ -31,6 +31,7 @@ running the scripts in the numeric order. The input files needed are:
 * `jess_cfos_dreadds_behavior - Sheet1.csv`
 * `jess_cfos_imaging_and_clearmap_params_20201125 - jess_cfos_imaging_and_clearmap_params_20201125.csv`
 * `Jess_cfos_total_and_fractional_counts.xlsx`
+
 Contact person: Will Townes.
 
 ## Data
