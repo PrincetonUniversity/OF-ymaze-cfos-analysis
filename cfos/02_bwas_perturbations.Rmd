@@ -1,0 +1,339 @@
+---
+title: "BWAS: Effect of categorical perturbation variables on c-Fos"
+author: "Will Townes"
+output: html_document
+---
+
+```{r}
+#library(glmGamPoi)
+library(cowplot)
+library(ggplot2)
+#library(ggridges)
+library(MASS)
+fp<-file.path
+mkdir_p<-function(x){
+    if(!dir.exists(x)){dir.create(x,recursive=TRUE)}
+}
+rp<-fp("results/bwas/perturbations")
+mkdir_p(rp)
+plt_dir<-fp("results/plots")
+mkdir_p(plt_dir)
+source("01_data_loading.R")
+source("utils.R")
+```
+
+Analysis plan:
+* Independent variables: within-batch categorical perturbations
+* Outcomes: c-Fos for 122 brain regions
+* Do linear regression with pcounts 
+* Do negative binomial regression with raw counts and log of total count as offset using glm.nb from MASS package. If any warnings or errors, flag the region in the output.
+
+## Main function
+
+```{r}
+#example of region prone to nb errors
+batch="201904_ymaze_cfos"
+conditions=c("CNO_control_no_reversal","CNO_control_reversal")
+i<-61
+
+#example of region prone to nb warnings
+batch<-"201810_adultacutePC_ymaze_cfos"
+conditions<-c("vector_control_reversal","lobVI_reversal")
+i<-99
+verbose<-FALSE
+
+batch<-"202010_cfos"
+conditions<-c("habituation","acquisition_day1")
+i<-1
+
+bwas<-function(batch,conditions,verbose=FALSE){
+    #batch a single string
+    #conditions a character vector of length two with control in first element,
+    #treatment is in second element
+    #rp the directory where the CSV files with results should be written
+    ss<-cm$batch==batch & cm$condition %in% conditions
+    cm2<-cm[ss,]
+    cm2$condition<-factor(cm2$condition,levels=conditions)
+    Yc<-counts122[ss,]
+    Ypc<-pcounts122[ss,]
+    nz<-colSums(Yc)>0
+    Yc<-Yc[,nz]
+    Ypc<-Ypc[,nz]
+    lsz<-log(rowSums(Yc))
+    #lsz<-lsz-mean(lsz)
+    cnames<-colnames(Ypc)
+    X<-with(cm2,model.matrix(~condition))
+    #fit_gp<-glm_gp(t(Yc),X,offset=lsz)
+    #thetas<-1/fit_gp$overdispersions
+    bwas_lm<-function(i){
+        fit<-lm(Ypc[,i]~X+0)
+        res<-as.data.frame(summary(fit)$coef[2,,drop=FALSE])
+        res$region<-cnames[i]
+        res
+    }
+    bwas_nb<-function(i){
+        if(verbose){print(i)}
+        #ctl<-glm.control(maxit=100)
+        fit<-tryCatch(withWarnings(glm.nb(Yc[,i]~X+0+offset(lsz))),
+                      error=function(e){NULL})
+        #fit is a list of $value, $warnings elements
+        #$value contains the glm.nb fit object
+        # fit<-glm(Yc[,i]~X+0, offset=lsz, fam=negative.binomial(theta=thetas[i]))
+        if(is.null(fit) || !fit$value$converged){
+            res<-matrix(NA,nrow=1,ncol=4)
+            colnames(res)<-c("Estimate","Std. Error","z value","Pr(>|z|)")
+            status<-"error"
+            #return(data.frame(region=cnames[i],coef=NA,pval=NA))
+        } else {
+            res<-summary(fit$value,dispersion=1)$coef[2,,drop=FALSE]
+            if(is.null(fit$warnings)){
+                status<-"success"
+            } else {
+                status<-"warning"
+            }
+        }
+        res<-as.data.frame(res)
+        res$region<-cnames[i]
+        res$status<-status
+        res
+    }
+    idx<-seq_len(ncol(Ypc))
+    res<-do.call(rbind,lapply(idx,bwas_lm))
+    res$status<-"success"
+    res2<-do.call(rbind,lapply(idx,bwas_nb))
+    res$fdr_adj_pval<-p.adjust(res$`Pr(>|t|)`, "BH")
+    res2$fdr_adj_pval<-p.adjust(res2$`Pr(>|z|)`, "BH")
+    rownames(res2)<-rownames(res)<-NULL
+    res2$control<-res$control<-conditions[1]
+    res2$treatment<-res$treatment<-conditions[2]
+    fname<-paste0(c(conditions,"pcounts-linreg.csv"),collapse="-")
+    fname2<-paste0(c(conditions,"counts-nbreg.csv"),collapse="-")
+    write.csv(res[,c(8,9,5,1:4,7,6)],fp(rp,fname),row.names=FALSE)
+    write.csv(res2[,c(8,9,5,1:4,7,6)],fp(rp,fname2),row.names=FALSE)
+}
+```
+
+## BWAS analyses
+
+```{r}
+# Acquisition Day 1 vs Habituation
+bwas(batch="202010_cfos", conditions=c("habituation","acquisition_day1"))
+
+# CNO reversal vs no reversal
+bwas(batch="201904_ymaze_cfos", conditions=c("CNO_control_no_reversal","CNO_control_reversal"))
+
+# CNO control vs vehicle control 
+bwas(batch="202002_cfos", conditions=c("Vehicle_control_reversal","CNO_control_reversal"))
+
+# Diluted vector control vs vehicle control
+bwas(batch="202002_cfos", conditions=c("Vehicle_control_reversal","dilutedvector_control_reversal"))
+
+# LobVI reversal vs CNO control
+bwas(batch="201904_ymaze_cfos", conditions=c("CNO_control_reversal","lobVI_reversal"))
+
+# LobVI reversal vs vector control
+bwas(batch="201810_adultacutePC_ymaze_cfos", conditions=c("vector_control_reversal","lobVI_reversal"))
+```
+
+## Explore results
+
+Find regions of interest
+* relatively low counts
+* strong contrast between conditions
+
+```{r}
+#batch<-"202010_cfos"
+#conditions<-c("habituation","acquisition_day1")
+batch<-"201904_ymaze_cfos"
+conditions<-c("CNO_control_no_reversal","CNO_control_reversal")
+fname2<-paste0(c(conditions,"counts-nbreg.csv"),collapse="-")
+res<-read.csv(fp(rp,fname2),header=TRUE)
+#subset to regions with FDR adj pval < .01
+regs<-res$region[res$fdr_adj_pval<.01]
+ss<-cm$batch==batch & cm$condition %in% conditions
+cm2<-cm[ss,]
+cm2$condition<-factor(cm2$condition,levels=conditions)
+Yc<-counts122[ss,]
+nz<-colSums(Yc)>0
+Yc<-Yc[,nz]
+lsz<-log(rowSums(Yc))
+X<-with(cm2,model.matrix(~condition))
+#list regions with at least one zero count
+lc<-colnames(Yc)[apply(Yc,2,min)<10]
+regs<-intersect(regs,lc)
+```
+
+Illustrate negative binomial fitting
+
+```{r}
+#iname<-"Nucleus raphe pontis"
+#iname<-"Medial habenula"
+#iname<-"Subparafascicular area"
+#iname<-"Oculomotor nucleus"
+#iname<-"Anterior tegmental nucleus"
+#iname<-"Interanterodorsal nucleus of the thalamus"
+plt_func<-function(iname,ret=c("plt","dat")){
+    ret<-match.arg(ret)
+    i<-which(colnames(Yc)==iname)
+    fit<-glm.nb(Yc[,i]~X+0+offset(lsz))
+    yhat<-predict(fit,type="response")
+    lp<-dnbinom(Yc[,i],size=fit$theta,mu=yhat)
+    mus<-tapply(yhat,cm2$condition,median)
+    ranges<-tapply(Yc[,i],cm2$condition,range)
+    pmf1<-function(x){dnbinom(round(x),fit$theta,mu=mus[1])}
+    pmf2<-function(x){dnbinom(round(x),fit$theta,mu=mus[2])}
+    pd<-data.frame(y=Yc[,i],cm2,pmf=lp)
+    if(ret=="dat"){return(pd)}
+    ggplot(pd)+geom_density(aes(x=y,fill=condition),color=NA,alpha=.8,adjust=2)+geom_function(fun=pmf1,n=1000,size=.8)+geom_function(fun=pmf2,n=1000,size=.8)+theme_bw()+ggtitle(iname)+xlab("c-Fos counts")+ylab("probability density")
+}
+
+plts<-lapply(regs,plt_func)
+plot_grid(plotlist=plts)
+#ggplot(pd)+stat_count(aes(x=y,fill=condition,y=..prop..),alpha=.9,position="identity",width=1)+geom_function(fun=pmf1,n=1000)+geom_function(fun=pmf2,n=1000)+theme_bw()+ggtitle(iname)+xlab("c-Fos counts")+ylab("probability density")
+#+geom_point(aes(x=y,y=lp,color=condition))
+#ggsave(fp(plt_dir,"nb_pmf_color.pdf"),width=6,height=4)
+```
+
+histogram instead of density
+
+```{r}
+iname<-"Anterodorsal nucleus"
+i<-which(colnames(Yc)==iname)
+fit<-glm.nb(Yc[,i]~X+0+offset(lsz))
+yhat<-predict(fit,type="response")
+lp<-dnbinom(Yc[,i],size=fit$theta,mu=yhat)
+mus<-tapply(yhat,cm2$condition,median)
+ranges<-tapply(Yc[,i],cm2$condition,range)
+pmf1<-function(x){dnbinom(round(x),fit$theta,mu=mus[1])}
+pmf2<-function(x){dnbinom(round(x),fit$theta,mu=mus[2])}
+pd<-data.frame(y=Yc[,i],cm2,pmf=lp)
+ggplot(pd)+geom_histogram(aes(x=y,fill=condition,y=..density..),color=NA,alpha=.8,position="identity",bins=6,boundary=0)+geom_function(fun=pmf1,n=1000,size=.8)+geom_function(fun=pmf2,n=1000,size=.8)+theme_bw()+ggtitle(iname)+xlab("c-Fos counts")+ylab("probability density")
+ggsave(fp(plt_dir,"nb_pmf_anterodorsal.pdf"),width=6,height=4)
+
+iname<-"Interanteromedial nucleus of the thalamus"
+i<-which(colnames(Yc)==iname)
+fit<-glm.nb(Yc[,i]~X+0+offset(lsz))
+yhat<-predict(fit,type="response")
+lp<-dnbinom(Yc[,i],size=fit$theta,mu=yhat)
+mus<-tapply(yhat,cm2$condition,median)
+ranges<-tapply(Yc[,i],cm2$condition,range)
+pmf1<-function(x){dnbinom(round(x),fit$theta,mu=mus[1])}
+pmf2<-function(x){dnbinom(round(x),fit$theta,mu=mus[2])}
+pd<-data.frame(y=Yc[,i],cm2,pmf=lp)
+ggplot(pd)+geom_histogram(aes(x=y,fill=condition,y=..density..),color=NA,alpha=.8,position="identity",bins=9,boundary=0)+geom_function(fun=pmf1,n=1000,size=.8)+geom_function(fun=pmf2,n=1000,size=.8)+theme_bw()+ggtitle(iname)+xlab("c-Fos counts")+ylab("probability density")
+ggsave(fp(plt_dir,"nb_pmf_interanteromedial.pdf"),width=6,height=4)
+```
+
+```{r}
+fnames<-list.files(fp(rp))
+readfile_func<-function(fname){
+    res<-cbind(filename=fname,read.csv(fp(rp,fname),header=TRUE))
+    colnames(res)[7:8]<-c("effect_size","pval")
+    res
+}
+res<-do.call(rbind,lapply(fnames,readfile_func))
+res$mod<-sapply(strsplit(res$filename,"-"),function(x){sub(".csv","",x[[4]],fixed=TRUE)})
+with(subset(res,mod=="nbreg"),table(status))
+bad<-subset(res,mod=="nbreg" & status!="success")
+extreme<-subset(res,pval<1e-16 & status=="success")
+write.csv(bad,"results/bwas/perturbations_bad.csv",row.names=FALSE)
+write.csv(extreme,"results/bwas/perturbations_extreme.csv",row.names=FALSE)
+```
+
+Make sure interesting neocortical regions not included
+
+```{r}
+regs<-c("Infralimbic area","Anterior cingulate area","Prelimbic area","Temporal association areas","Somatosensory areas")
+any(regs %in% bad$region)
+```
+
+Regions with extreme p-values, is it a real difference?
+
+```{r}
+batch<-"201904_ymaze_cfos"
+conditions<-c("CNO_control_reversal","lobVI_reversal")
+region<-"Posterior complex of the thalamus"
+ss<-cm$batch==batch & cm$condition %in% conditions
+Yp<-pcounts122[ss,]
+Yc<-counts122[ss,]
+x<-factor(cm$condition[ss])
+boxplot(Yc[,region]~x,xlab="experimental condition",ylab="counts",main="Posterior complex of the thalamus",log="y")
+boxplot(Yp[,region]~x,xlab="experimental condition",ylab="pcounts",main="Posterior complex of the thalamus")
+lsz<-log(rowSums(Yc))
+fit_gp<-glm_gp(t(Yc),model.matrix(~x),offset=lsz)
+thetas<-1/fit_gp$overdispersions
+fit<-glm.nb(Yc[,region]~x+offset(lsz))
+fit2<-glm(Yc[,region]~x+offset(lsz),fam=negative.binomial(theta=thetas[region]))
+```
+
+Double check data for weird outliers:
+lobVI_reversal vs vector_control_reversal
+* Pontine reticular nucleus
+* Pedunculopontine nucleus
+Flagged numerical warning in nb regression for both regions.
+
+```{r}
+batch<-"201810_adultacutePC_ymaze_cfos"
+conditions<-c("vector_control_reversal","lobVI_reversal")
+region<-"Pontine reticular nucleus"
+#region<-"Pedunculopontine nucleus"
+ss<-cm$batch==batch & cm$condition %in% conditions
+Yp<-pcounts122[ss,]
+Yc<-counts122[ss,]
+x<-factor(cm$condition[ss])
+boxplot(Yc[,region]~x,xlab="experimental condition",ylab="counts",main=region)
+boxplot(Yp[,region]~x,xlab="experimental condition",ylab="pcounts",main=region)
+lsz<-log(rowSums(Yc))
+#fit_gp<-glm_gp(t(Yc),model.matrix(~x),offset=lsz)
+#thetas<-1/fit_gp$overdispersions
+summary(fit<-glm.nb(Yc[,region]~x+offset(lsz)))$coefficients
+summary(fit2<-glm(Yc[,region]~x+offset(lsz),fam=negative.binomial(theta=thetas[region])),dispersion=1)$coefficients
+summary(lm(Yp[,region]~x))
+fit$converged
+```
+
+Vehicle_control_reversal
+202002_cfos
+Nucleus incertus
+Flagged numerical warning in nb regression.
+
+```{r}
+batch<-"202002_cfos"
+conditions<-c("Vehicle_control_reversal","CNO_control_reversal")
+region<-"Nucleus incertus"
+ss<-cm$batch==batch & cm$condition %in% conditions
+Yp<-pcounts122[ss,]
+Yc<-counts122[ss,]
+x<-factor(cm$condition[ss])
+boxplot(Yc[,region]~x,xlab="experimental condition",ylab="counts",main=region)
+boxplot(Yp[,region]~x,xlab="experimental condition",ylab="pcounts",main=region)
+lsz<-log(rowSums(Yc))
+fit_gp<-glm_gp(t(Yc),model.matrix(~x),offset=lsz)
+thetas<-1/fit_gp$overdispersions
+summary(fit<-glm.nb(Yc[,region]~x+offset(lsz)))$coefficients
+summary(fit2<-glm(Yc[,region]~x+offset(lsz),fam=negative.binomial(theta=thetas[region])),dispersion=1)$coefficients
+summary(lm(Yp[,region]~x))
+fit$converged
+```
+
+Tuberal nucleus
+Numerical warning in nb regression flagged but result consistent with linear regression (p-value exaggerated however).
+
+```{r}
+batch<-"202002_cfos"
+conditions<-c("Vehicle_control_reversal","dilutedvector_control_reversal")
+region<-"Tuberal nucleus"
+ss<-cm$batch==batch & cm$condition %in% conditions
+Yp<-pcounts122[ss,]
+Yc<-counts122[ss,]
+x<-factor(cm$condition[ss])
+boxplot(Yc[,region]~x,xlab="experimental condition",ylab="counts",main=region)
+boxplot(Yp[,region]~x,xlab="experimental condition",ylab="pcounts",main=region)
+lsz<-log(rowSums(Yc))
+fit_gp<-glm_gp(t(Yc),model.matrix(~x),offset=lsz)
+thetas<-1/fit_gp$overdispersions
+summary(fit<-glm.nb(Yc[,region]~x+offset(lsz)))$coefficients
+summary(fit2<-glm(Yc[,region]~x+offset(lsz),fam=negative.binomial(theta=thetas[region])),dispersion=1)$coefficients
+summary(lm(Yp[,region]~x))
+fit$converged
+```

@@ -23,6 +23,16 @@ Here is an example video showing the mouse in the open field arena (right), a zo
 
 This repository contains the scripts to analyze the centroid positions of the mice in the open field arena as well as the ethogram data obtained from the MouseMotionMapper pipeline. The script 'main_OF_analysis.m' contains all data analysis and visualization scripts to reproduce the results in the manuscript. When running this script, txt and csv files are exported with selected data, for which statistical tests can be performed in R (see folder R_scripts). 
 
+## Whole brain neural activity (c-Fos)
+The c-Fos R scripts can be found under the `cfos` subfolder. 
+Once the data has been made publicly available, it should be placed in the 
+subfolder `cfos/data/original` and then all analyses should be reproducible by 
+running the scripts in the numeric order. The input files needed are:
+* `jess_cfos_dreadds_behavior - Sheet1.csv`
+* `jess_cfos_imaging_and_clearmap_params_20201125 - jess_cfos_imaging_and_clearmap_params_20201125.csv`
+* `Jess_cfos_total_and_fractional_counts.xlsx`
+Contact person: Will Townes.
+
 ## Data
 The raw data will be available on DataSpace.
 

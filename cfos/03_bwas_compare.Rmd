@@ -1,0 +1,57 @@
+---
+title: "Compare effect sizes of different c-Fos contrasts"
+author: "Will Townes"
+output: html_document
+---
+
+```{r}
+library(tidyverse); theme_set(theme_bw())
+fp<-file.path
+mkdir_p<-function(x){
+    if(!dir.exists(x)){dir.create(x,recursive=TRUE)}
+}
+rp<-fp("results/bwas")
+mkdir_p(rp)
+source("utils.R")
+```
+
+data loading
+
+```{r}
+res<-list()
+res[[1]]<-read.csv(fp(rp,"perturbations/CNO_control_reversal-lobVI_reversal-counts-nbreg.csv"))
+res[[2]]<-read.csv(fp(rp,"perturbations/CNO_control_no_reversal-CNO_control_reversal-counts-nbreg.csv"))
+res[[3]]<-read.csv(fp(rp,"perturbations/habituation-acquisition_day1-counts-nbreg.csv"))
+crep<-c("lobVI","reversal","acquisition")
+for(i in seq_along(res)){
+    d<-res[[i]]
+    res[[i]]<-d[d$status=="success",c("region","z.value")]
+    colnames(res[[i]])[2]<-crep[i]
+}
+pd<-Reduce(function(x,y){merge(x,y,by="region",all=TRUE)},res)
+```
+
+Correlations between effect sizes
+
+```{r}
+cor(pd[,-1],use="pairwise.complete.obs")
+cor(pd[,-1],use="pairwise.complete.obs",method="spearman")
+```
+
+LobVI effect vs reversal effect
+
+```{r}
+big<-pd$lobVI< -7 | pd$lobVI>2.5 | pd$reversal< -2.5 | pd$reversal > 8
+big[is.na(big)]<-FALSE
+pd$label1<-NA
+pd$label1[big]<-pd$region[big]
+ggplot(pd,aes(x=lobVI,y=reversal))+geom_text(aes(label=label1),hjust="inward",size=2)+geom_point(size=2)
+ggsave(fp("results/plots/bwas_comparison_lobvi_reversal.pdf"),width=6,height=4)
+```
+
+LobVI effect vs acquisition
+
+```{r}
+ggplot(pd,aes(x=lobVI,y=acquisition))+geom_point(size=2)
+ggsave(fp("results/plots/bwas_comparison_lobvi_acquisition.pdf"),width=6,height=4)
+```
