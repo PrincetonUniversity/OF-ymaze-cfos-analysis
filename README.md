@@ -1,4 +1,4 @@
-# Analysis of open field (OF), ymaze and c-Fos experiments 
+# Analysis of open field (OF), y-maze and c-Fos experiments 
 
 This repository contains the analysis scripts for the following manuscript:
 
