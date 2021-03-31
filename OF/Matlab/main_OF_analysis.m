@@ -9,12 +9,11 @@ addpath(genpath(pwd))
 
 % define paths
 data_path = '../Data/';
-metadata_path = './metadata/';
 out_path = '../Output/';
 fig_path = '../Figures/';
 
 % load info about M classes
-load([metadata_path 'manualSort.mat'],'sixSortedLabels','eightSortedLabels','sH4')
+load([data_path 'manualSort.mat'],'sixSortedLabels','eightSortedLabels','sH4')
 
 % frames per second
 fps = 80;
@@ -55,7 +54,7 @@ point_size = 7;
 % minimal frame length of all), 3) the data for Crus I mice is splitted
 % into those with and without clearing
 
-makeInfoFiles([data_path 'datasets/'], out_path, sH4); % 6 states (one locomotion behavior)
+makeInfoFiles(data_path, out_path, sH4); % 6 states (one locomotion behavior)
 
 % add predicted behaviors to 6 states files with locomotion split into slow
 % / medium / fast based on centroid velocity
@@ -98,7 +97,7 @@ group = 'C57Bl';
 day = 1;
 mouse = 3;
 frame = 985;
-video_box_filename = [data_path 'OFT-0066-00_box_aligned.h5'];
+video_box_filename = [data_path 'OFT-0066-00_box_aligned_frame985.h5'];
 exampleImageMousePaws(group,day,mouse,frame,colors_paws,[fig_path 'Figure_SI_1/'],out_path,video_box_filename)
 
 %% Main Figure B: Mouse in OF with body parts labelled, ethogram
@@ -160,6 +159,6 @@ compareChangeInFractionsSI(control_groups,control_labels,[fig_path 'Figure_SI_2/
 group = 'C57Bl';
 day = 1;
 mouse = 3;
-video_filename = [data_path 'OFT-0066-00_frames60000to60500.h5']; % raw OF images
-video_box_filename = [data_path 'OFT-0066-00_box_aligned.h5'];
+video_filename = [data_path 'OFT-0066-00_frames60085to60385.h5']; % raw OF images
+video_box_filename = [data_path 'OFT-0066-00_box_aligned_frames60085to60385.h5'];
 makeMovieCombinedOF(group,day,mouse,fig_path,out_path,video_filename,video_box_filename,MSortedLabels,M,fps,colors_behaviors)

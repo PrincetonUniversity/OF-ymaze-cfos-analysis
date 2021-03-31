@@ -35,12 +35,11 @@ wr = wr_by_day_loco{day}{mouse};
 mouse_video_data = ...
     h5read(video_filename,'/pg0');
 
-fstart = 60000;
-fend = 60500; 
-
 mouse_video_data_box = ...
-    h5read(video_box_filename,'/box',...
-    [1 1 1 fstart],[400 400 1 fend-fstart+1]);
+    h5read(video_box_filename,'/box');
+
+fstart = 60085;
+fend = 60385; 
 
 %% plot the movie of the skeleton in the OF
 
@@ -70,7 +69,7 @@ if ~exist([fig_path group '_day' num2str(day) '_mouse' num2str(mouse)],'dir')
 end
 
 c = 1;
-for j = fstart+85:fstart+385
+for j = fstart:fend
     disp(j)
     
     h = figure;
@@ -118,7 +117,7 @@ for j = fstart+85:fstart+385
     
     % pose tracking result
     nexttile
-    imagesc(mouse_video_data_box(:,:,1,j-fstart+1))
+    imagesc(mouse_video_data_box(:,:,j-fstart+1))
     hold on
     colormap(gca,cmap);
     hold on
@@ -126,7 +125,7 @@ for j = fstart+85:fstart+385
     ax = gca;
     ax.NextPlot = 'replaceChildren';
     axis equal off
-    xlim([x_min x_max])
+    xlim([x_min-10 x_max+10])
     ylim([y_min y_max])
     title(MSortedLabels(wr(j)),'Color',colors_behaviors(wr(j),:),'FontSize',title_font_size)
     

@@ -25,7 +25,7 @@ joints = joints{1};
 joints = reshape(joints,36,size(joints,3));
 
 %% get the data from the raw mouse videos (in a box)
-mouse_video_data_box = h5read(video_box_filename,'/box',[1 1 1 frame],[400 400 1 frame]);
+mouse_video_data_box = h5read(video_box_filename,'/box');
 
 %% plot 
 
