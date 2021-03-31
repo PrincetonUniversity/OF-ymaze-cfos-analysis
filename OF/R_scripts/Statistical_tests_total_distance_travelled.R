@@ -6,7 +6,7 @@ library(DescTools)
 library(ggplot2)
 library(ggpubr)
 
-dat <- read.table('/Users/bergeler/Documents/Mouse\ Behavior/Paper_Jess/Output/Classical_measures.txt', header = TRUE, sep = ",")
+dat <- read.table('../Output/Classical_measures.txt', header = TRUE, sep = ",")
 
 # total distance traveled
 dat <- as.data.frame(dat[,c('day','group','mouse','tot_distance')])

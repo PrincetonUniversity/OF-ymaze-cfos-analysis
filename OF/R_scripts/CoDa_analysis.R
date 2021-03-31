@@ -11,7 +11,7 @@ require(ggplot2)
 library(ggpubr)
 
 # load data set
-dat <- read.table("/Users/bergeler/Documents/Mouse\ Behavior/Paper_Jess/Output/Mouse_behavior_data_set.csv",header = TRUE, sep = ",")
+dat <- read.table("../Output/Mouse_behavior_data_set.csv",header = TRUE, sep = ",")
 
 dat <- within(dat,{
   group <- factor(group)

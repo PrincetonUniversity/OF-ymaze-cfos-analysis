@@ -4,7 +4,7 @@ library(rstatix)
 library(ggplot2)
 library(ggpubr)
 
-dat <- read.table('/Users/bergeler/Documents/Mouse\ Behavior/Paper_Jess/Output/Classical_measures.txt', header = TRUE, sep = ",")
+dat <- read.table('../Output/Classical_measures.txt', header = TRUE, sep = ",")
 
 # fraction in inner region
 dat <- as.data.frame(dat[,c('day','group','mouse','fraction_inner')])
