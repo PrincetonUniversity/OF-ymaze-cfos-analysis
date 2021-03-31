@@ -337,3 +337,71 @@ summary(fit2<-glm(Yc[,region]~x+offset(lsz),fam=negative.binomial(theta=thetas[r
 summary(lm(Yp[,region]~x))
 fit$converged
 ```
+
+## Aggregated regions
+
+```{r}
+agg<-read.csv(fp("data/original/aggregated_regions.csv"),header=TRUE)
+xt<-as.matrix(table(agg$region,agg$aggregated_region))
+Y<-counts122
+lsz0<-log(rowSums(Y))
+Y<-Y[,rownames(xt)]
+Y2<-Y%*%xt
+
+bwas2<-function(batch,conditions,verbose=FALSE){
+    #batch a single string
+    #conditions a character vector of length two with control in first element,
+    #treatment is in second element
+    #rp the directory where the CSV files with results should be written
+    ss<-cm$batch==batch & cm$condition %in% conditions
+    cm2<-cm[ss,]
+    cm2$condition<-factor(cm2$condition,levels=conditions)
+    Yc<-Y2[ss,]
+    lsz<-lsz0[ss]
+    cnames<-colnames(Yc)
+    X<-with(cm2,model.matrix(~condition))
+    bwas_nb<-function(i){
+        if(verbose){print(i)}
+        #ctl<-glm.control(maxit=100)
+        fit<-tryCatch(withWarnings(glm.nb(Yc[,i]~X+0+offset(lsz))),
+                      error=function(e){NULL})
+        #fit is a list of $value, $warnings elements
+        #$value contains the glm.nb fit object
+        if(is.null(fit) || !fit$value$converged){
+            res<-matrix(NA,nrow=1,ncol=4)
+            colnames(res)<-c("Estimate","Std. Error","z value","Pr(>|z|)")
+            status<-"error"
+        } else {
+            res<-summary(fit$value,dispersion=1)$coef[2,,drop=FALSE]
+            if(is.null(fit$warnings)){
+                status<-"success"
+            } else {
+                status<-"warning"
+            }
+        }
+        res<-as.data.frame(res)
+        res$region<-cnames[i]
+        res$status<-status
+        res
+    }
+    idx<-seq_len(ncol(Yc))
+    res<-do.call(rbind,lapply(idx,bwas_nb))
+    res$fdr_adj_pval<-p.adjust(res$`Pr(>|z|)`, "BH")
+    rownames(res)<-NULL
+    res$control<-conditions[1]
+    res$treatment<-conditions[2]
+    #fname2<-paste0(c(conditions,"counts-nbreg.csv"),collapse="-")
+    #write.csv(res[,c(8,9,5,1:4,7,6)],fp(rp,fname2),row.names=FALSE)
+    res[,c(8,9,5,1:4,7,6)]
+}
+res<-list()
+res[[1]]<-bwas2(batch="202010_cfos", conditions=c("habituation","acquisition_day1"))
+
+# CNO reversal vs no reversal
+res[[2]]<-bwas2(batch="201904_ymaze_cfos", conditions=c("CNO_control_no_reversal","CNO_control_reversal"))
+
+# LobVI reversal vs CNO control
+res[[3]]<-bwas2(batch="201904_ymaze_cfos", conditions=c("CNO_control_reversal","lobVI_reversal"))
+res<-do.call(rbind,res)
+write.csv(res,"results/bwas/perturbations_aggregated.csv",row.names=FALSE)
+```

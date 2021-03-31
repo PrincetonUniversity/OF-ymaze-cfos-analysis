@@ -4,9 +4,9 @@ library(readxl)
 fp<-file.path
 dp<-"data/original"
 
-dreadds<-read.csv(fp(dp,"jess_cfos_dreadds_behavior - Sheet1.csv"), header=TRUE, na.strings=c("NA","N.A.","<NA>"))
-clearmap<-read.csv(fp(dp,"jess_cfos_imaging_and_clearmap_params_20201125 - jess_cfos_imaging_and_clearmap_params_20201125.csv"), header=TRUE)
-counts122<-as.data.frame(read_excel(fp(dp,"Jess_cfos_total_and_fractional_counts.xlsx"),sheet="total_122_regions"))
+dreadds<-read.csv(fp(dp,"cfos_dreadds_behavior.csv"), header=TRUE, na.strings=c("NA","N.A.","<NA>"))
+clearmap<-read.csv(fp(dp,"cfos_imaging_and_clearmap_params_20201125.csv"), header=TRUE)
+counts122<-as.data.frame(read_excel(fp(dp,"cfos_total_and_fractional_counts.xlsx"),sheet="total_122_regions"))
 
 make_key<-function(dat){
     rownames(dat)<-paste(dat$batch,dat$brain,sep="-")

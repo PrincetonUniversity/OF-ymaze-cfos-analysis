@@ -28,9 +28,10 @@ The c-Fos R scripts can be found under the `cfos` subfolder.
 Once the data has been made publicly available, it should be placed in the 
 subfolder `cfos/data/original` and then all analyses should be reproducible by 
 running the scripts in the numeric order. The input files needed are:
-* `jess_cfos_dreadds_behavior - Sheet1.csv`
-* `jess_cfos_imaging_and_clearmap_params_20201125 - jess_cfos_imaging_and_clearmap_params_20201125.csv`
-* `Jess_cfos_total_and_fractional_counts.xlsx`
+* `aggregated_regions.csv`
+* `cfos_dreadds_behavior.csv`
+* `cfos_imaging_and_clearmap_params_20201125.csv`
+* `cfos_total_and_fractional_counts.xlsx`
 
 Contact person: Will Townes.
 
@@ -43,6 +44,7 @@ The raw data will be available on DataSpace.
 3. https://github.com/talmo/leap
 4. https://github.com/PrincetonUniversity/ClearMapCluster
 5. https://github.com/PrincetonUniversity/lightsheet_helper_scripts
+6. https://github.com/PrincetonUniversity/BrainPipe/
 
 ## License
 This work is published under the MIT license.  
