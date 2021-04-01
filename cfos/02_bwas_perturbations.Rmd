@@ -338,6 +338,32 @@ summary(lm(Yp[,region]~x))
 fit$converged
 ```
 
+Periaqueductal gray
+
+```{r}
+batch<-"202010_cfos"
+conditions<-c("habituation","acquisition_day1")
+region<-"Periaqueductal gray"
+ss<-cm$batch==batch & cm$condition %in% conditions
+Yp<-pcounts122[ss,]
+pd<-data.frame(condition=factor(cm$condition[ss],levels=conditions),pcounts=pcounts122[ss,region])
+ggplot(pd,aes(x=condition,y=pcounts))+geom_boxplot(outlier.shape=NA,fill="gray")+geom_jitter(height=0,width=.1,size=3)+ylab("proportion of counts")+ggtitle(region)
+ggsave(fp(plt_dir,"periaqueductal_gray_boxplot.pdf"),width=6,height=4)
+```
+
+and lateral habenula
+
+```{r}
+batch<-"201904_ymaze_cfos"
+conditions<-c("CNO_control_no_reversal","CNO_control_reversal")
+region<-"Lateral habenula"
+ss<-cm$batch==batch & cm$condition %in% conditions
+Yp<-pcounts122[ss,]
+pd<-data.frame(condition=factor(cm$condition[ss],levels=conditions),pcounts=pcounts122[ss,region])
+ggplot(pd,aes(x=condition,y=pcounts))+geom_boxplot(outlier.shape=NA,fill="gray")+geom_jitter(height=0,width=.1,size=3)+ylab("proportion of counts")+ggtitle(region)
+ggsave(fp(plt_dir,"lateral_habenula_boxplot.pdf"),width=6,height=4)
+```
+
 ## Aggregated regions
 
 ```{r}
