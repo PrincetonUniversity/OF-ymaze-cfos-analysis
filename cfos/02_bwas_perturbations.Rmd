@@ -338,30 +338,28 @@ summary(lm(Yp[,region]~x))
 fit$converged
 ```
 
-Periaqueductal gray
+Periaqueductal gray and lateral habenula boxplots
 
 ```{r}
-batch<-"202010_cfos"
-conditions<-c("habituation","acquisition_day1")
-region<-"Periaqueductal gray"
-ss<-cm$batch==batch & cm$condition %in% conditions
-Yp<-pcounts122[ss,]
-pd<-data.frame(condition=factor(cm$condition[ss],levels=conditions),pcounts=pcounts122[ss,region])
-ggplot(pd,aes(x=condition,y=pcounts))+geom_boxplot(outlier.shape=NA,fill="gray")+geom_jitter(height=0,width=.1,size=3)+ylab("proportion of counts")+ggtitle(region)
-ggsave(fp(plt_dir,"periaqueductal_gray_boxplot.pdf"),width=6,height=4)
-```
-
-and lateral habenula
-
-```{r}
-batch<-"201904_ymaze_cfos"
-conditions<-c("CNO_control_no_reversal","CNO_control_reversal")
-region<-"Lateral habenula"
-ss<-cm$batch==batch & cm$condition %in% conditions
-Yp<-pcounts122[ss,]
-pd<-data.frame(condition=factor(cm$condition[ss],levels=conditions),pcounts=pcounts122[ss,region])
-ggplot(pd,aes(x=condition,y=pcounts))+geom_boxplot(outlier.shape=NA,fill="gray")+geom_jitter(height=0,width=.1,size=3)+ylab("proportion of counts")+ggtitle(region)
-ggsave(fp(plt_dir,"lateral_habenula_boxplot.pdf"),width=6,height=4)
+od<-fp(plt_dir,"boxplots")
+mkdir_p(od)
+regs<-c("Periaqueductal gray","Lateral habenula")
+Yp<-pcounts122[,regs]
+conditions<-data.frame(
+    batch=c("202010_cfos", "201904_ymaze_cfos", "201904_ymaze_cfos"),
+    control=c("habituation", "CNO_control_no_reversal", "CNO_control_reversal"),
+    treatment=c("acquisition_day1","CNO_control_reversal","lobVI_reversal"))
+for(i in 1:nrow(conditions)){
+    for(reg in regs){
+        batch<-conditions$batch[i]
+        cds<-conditions[i,2:3]
+        ss<-cm$batch==batch & cm$condition %in% cds
+        pd<-data.frame(condition=factor(cm$condition[ss],levels=cds), pcounts=pcounts122[ss,reg])
+        ggplot(pd,aes(x=condition,y=pcounts))+geom_boxplot(outlier.shape=NA,fill="gray")+geom_jitter(height=0,width=.1,size=3)+ylab("proportion of counts")+ggtitle(reg)
+        fname<-paste0(paste(c(reg,cds),collapse="-"),".pdf")
+        ggsave(fp(od,fname),width=6,height=4)    
+    }
+}
 ```
 
 ## Aggregated regions
