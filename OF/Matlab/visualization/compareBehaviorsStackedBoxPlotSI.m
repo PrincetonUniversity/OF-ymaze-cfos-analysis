@@ -81,27 +81,27 @@ data_day2 = comp_means(:,2);
 data_day2 = vertcat(data_day2{:});
 
 nexttile
-b = bar(data_day1,'stacked');
+b = bar(data_day1(1:3,:),'stacked');
 for i = 1:M
     b(i).FaceColor = colors_behaviors(i,:);
 end
-xticklabels(labels)
+xticklabels(labels(1:3))
 xtickangle(45)
 ylabel('Fraction of time in behavior','FontSize',label_font_size)
 ylim([0 1])
-xlim([0.5,length(groups) + 0.5])
+xlim([0.5,3.5])
 title('Day 1','FontSize',title_font_size,'FontWeight','Normal','FontName','Arial')
 prepfig()
 
 nexttile
-b = bar(data_day2,'stacked');
+b = bar(data_day2(1:3,:),'stacked');
 for i = 1:M
     b(i).FaceColor = colors_behaviors(i,:);
 end
-xticklabels(labels)
+xticklabels(labels(1:3))
 xtickangle(45)
 ylim([0 1])
-xlim([0.5,length(groups) + 0.5])
+xlim([0.5,3.5])
 title('Day 2','FontSize',title_font_size,'FontWeight','Normal')
 prepfig()
 
@@ -115,7 +115,7 @@ close(h)
 %% Plot change in behavior between day 1 and day 2
 h = figure;
 set(h,'Units','centimeters');
-h.Position = [10,10,5.5,6];
+h.Position = [10,10,6.5,6];
 pos = get(h,'Position');
 set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3)+1, pos(4)])
 
@@ -135,6 +135,7 @@ customCMap = [customCMap1;customCMap2];
 imagesc(flip(change_all),[1/exp(1),exp(1)]);
 set(gca,'ColorScale','log')
 colormap(gca,customCMap)
+xticks(1:numel(labels))
 xticklabels(labels)
 xtickangle(45)
 yticks(1:M)
@@ -146,7 +147,7 @@ set(cb,'Ticklabels',num2str(get(cb,'Ticks')','%.1f'))
 
 prepfig()
 % add lines at upper and right side of box
-xline(3.5,'k-','Alpha',1)
+xline(7.5,'k-','Alpha',1)
 yline(0.5,'k-','Alpha',1)
 
 %%

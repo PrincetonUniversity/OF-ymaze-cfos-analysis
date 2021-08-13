@@ -72,15 +72,21 @@ for i = 1:n_mice
             
             % plot to check the inner / outer regions
 %             figure()
-%             axis equal
 %             plot(tt(:,1),tt(:,2))
 %             hold on
-%             xline(limx(1));
-%             xline(limx(2));
-%             yline(limy(1));
-%             yline(limy(2));
-%             xlim([0 1100]);
-%             ylim([0 1100]);
+%             line([limx(1) limx(2)],[limy(1) limy(1)],'Color','k','LineWidth',2);
+%             line([limx(2) limx(2)],[limy(1) limy(2)],'Color','k','LineWidth',2);
+%             line([limx(2) limx(1)],[limy(2) limy(2)],'Color','k','LineWidth',2);
+%             line([limx(1) limx(1)],[limy(2) limy(1)],'Color','k','LineWidth',2);
+%             line([min(tt(:,1)) max(tt(:,1))],[min(tt(:,2)) min(tt(:,2))],'Color','k','LineWidth',2);
+%             line([max(tt(:,1)) max(tt(:,1))],[min(tt(:,2)) max(tt(:,2))],'Color','k','LineWidth',2);
+%             line([max(tt(:,1)) min(tt(:,1))],[max(tt(:,2)) max(tt(:,2))],'Color','k','LineWidth',2);
+%             line([min(tt(:,1)) min(tt(:,1))],[max(tt(:,2)) min(tt(:,2))],'Color','k','LineWidth',2);
+%             xlim([min(tt(:,1)) max(tt(:,1))]);
+%             ylim([min(tt(:,2)) max(tt(:,2))]);
+%             axis equal off
+%             saveas(gcf,'../Figures/Additional_Figures/example_inner_outer_region.png')
+%             close(gcf)
             
             index_inner = (tt(:,1)>limx(1) & tt(:,1)<limx(2) & tt(:,2)>limy(1) & tt(:,2)<limy(2));
             index_outer = (tt(:,1)<limx(1) | tt(:,1)>limx(2) | tt(:,2)<limy(1) | tt(:,2)>limy(2));

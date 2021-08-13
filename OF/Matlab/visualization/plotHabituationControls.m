@@ -1,4 +1,4 @@
-function [] = plotHabituation(groups,labels,colors,fig_path,out_path,MSortedLabels,fps,M)
+function [] = plotHabituationControls(groups,labels,colors,fig_path,out_path,MSortedLabels,fps,M)
 % PLOTHABITUATION: plot fraction to be in a behavior over time 
 %
 % Input:
@@ -76,65 +76,12 @@ for g = 1:length(groups)
     prob_per_ints_STD_All{g} = prob_per_ints_STD;
 end
 
-%% plot all behaviors (all experimental groups compared to CNO only)
-
+%% plot all behaviors
 clusters = 1:8;
 
 global title_font_size
 global axis_font_size
 global label_font_size
-
-groups_sets = {[1 2],[1 3],[1 4],[1 5]}; % all groups compared to CNO only
-
-for gs = 1:length(groups_sets)
-    h = figure;
-    set(h,'Units','centimeters');
-    h.Position = [10,10,18,7];
-    pos = get(h,'Position');
-    set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)])
-    
-    t = tiledlayout(2,4);
-    t.Padding = 'compact';
-    t.TileSpacing = 'compact';
-    
-    for i = 1:length(clusters)
-        nexttile
-        cluster = clusters(i);
-        for g = groups_sets{gs}
-            for d = 1:ndays
-                mean_val = prob_per_ints_mean_All{g}{d}(cluster,:)';
-                SE_val = prob_per_ints_SE_All{g}{d}(cluster,:)';
-                
-                xplot = ((1:1000:size(wr{d},2))/fps/60)'; % time points for plotting (in minutes)
-                if d == 1
-                    plot(xplot,mean_val,':','color',colors{g},'MarkerSize',10,'LineWidth',0.5);
-                else
-                    plot(xplot,mean_val,'color',colors{g},'MarkerSize',10,'LineWidth',1);
-                end
-                hold on
-                shade = fill([xplot;flipud(xplot)],[(mean_val - SE_val); flipud((mean_val + SE_val))],colors{g},'linestyle','none');
-                if d == 1
-                    set(shade,'facealpha',0.2)
-                else
-                    set(shade,'facealpha',0.4)
-                end
-                hold on
-            end
-        end
-        xlim([min(xplot) max(xplot)])
-        ylim([0.02 0.31])
-        set(gca,'FontSize',axis_font_size)
-        title(MSortedLabels{cluster},'FontSize',title_font_size,'FontWeight','Normal')
-        xlabel('Time (min)','Fontsize',label_font_size)
-        prepfig()
-    end
-    ylabel(t,'fraction of time in behavior','Fontsize',label_font_size)
-    fig_name = [fig_path 'Habituation_' labels{groups_sets{gs}(1)} '_vs_' labels{groups_sets{gs}(2)} '.pdf'];
-    print(h,fig_name,'-dpdf','-r0');
-    close(h)
-end
-
-%% plot all behaviors
 
 for g = 1:numel(groups)
     h = figure;
@@ -181,55 +128,5 @@ for g = 1:numel(groups)
     print(h,fig_name,'-dpdf','-r0');
     close(h)
 end
-
-%% Plot selected behaviors
-
-h = figure;
-set(h,'Units','centimeters');
-h.Position = [10,10,7.5,7.5]; %[10,10,5,6];
-pos = get(h,'Position');
-set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)])
-
-t = tiledlayout(3,2); %tiledlayout(2,1);
-t.Padding = 'compact';
-t.TileSpacing = 'compact';
-
-cluster = 8; 
-for g = [1 2 4 5 3] %[1 2] % CNO only and Lobule VI
-    nexttile
-    for d = 1:ndays
-        mean_val = prob_per_ints_mean_All{g}{d}(cluster,:)';
-        error_val = prob_per_ints_STD_All{g}{d}(cluster,:)';
-        
-        xplot = ((1:1000:size(wr{d},2))/fps/60)'; % time points for plotting (in minutes)
-        if d == 1
-            plot(xplot,mean_val,':','color',colors{1},'MarkerSize',10,'LineWidth',0.5);
-        else
-            plot(xplot,mean_val,'color',colors{1},'MarkerSize',10,'LineWidth',1);
-        end
-        hold on
-        shade = fill([xplot;flipud(xplot)],[(mean_val - error_val); flipud((mean_val + error_val))],colors{1},'linestyle','none');
-        if d == 1
-            set(shade,'facealpha',0.2)
-        else
-            set(shade,'facealpha',0.4)
-        end
-        hold on
-    end
-    xlim([min(xplot) max(xplot)])
-    ylim([0.02 0.45])
-    set(gca,'FontSize',axis_font_size)
-    if g == 2
-        xlabel('Time (min)','Fontsize',label_font_size)
-    end
-    title(labels{g})
-    prepfig()
-end
-ylabel(t,'Probability to be in fast locomotion','Fontsize',label_font_size)
-
-%%
-fig_name = [fig_path 'Figure_change_of_fast_locomotion_over_time.pdf'];
-exportgraphics(h,fig_name)
-close(h)
 
 end
