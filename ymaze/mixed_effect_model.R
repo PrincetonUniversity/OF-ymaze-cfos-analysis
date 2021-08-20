@@ -14,12 +14,11 @@ library(multcomp)
 library(plotrix)
 
 # load data
-my_data <- read.table("/Users/bergeler/Documents/Mouse\ Behavior/Paper_Jess/OF-ymaze-cfos-analysis/ymaze/Allmice_modified.txt", sep="\t", header = TRUE)
+my_data <- read.table("Allmice_modified.txt", sep="\t", header = TRUE)
 my_data <- my_data[,c(2,5:18)]
 my_data <- melt(my_data, id=c("Group","ID"))
 
 # split variable names to separate day and session
-my_data$variable
 dat1 <- data.frame(do.call(rbind, strsplit(as.vector(my_data$variable), split = "\\.\\.s")))
 names(dat1) <- c("Day","Session")
 my_data <- cbind(my_data[c(1,2,4)],dat1)
@@ -82,7 +81,6 @@ ggplot(ad2,aes(x = Session,y = mean_frac, group = Group)) +
   geom_line(aes(color = Group)) + 
   geom_errorbar(data=ad2, mapping=aes(x=Session, ymin=mean_frac-sem_frac, ymax=mean_frac+sem_frac,color=Group), width = 0.1) +
   ylim(0,1)
-# NOTE: looks different than the plot in the paper --> have animals been excluded from the analysis?
 
 # reversal
 ggplot(data_rev,aes(x = Session_factor,y = value,fill = Group)) +
@@ -98,7 +96,6 @@ rev <- data_rev %>%
 ggplot(rev,aes(x = Session,y = name, group = Group)) +
   geom_line(aes(color = Group)) + 
   ylim(0,1)
-# NOTE: looks a bit different than the plot in the paper
 
 # --- acquisition day 1 ---#
 
