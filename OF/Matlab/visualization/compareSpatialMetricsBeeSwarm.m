@@ -1,5 +1,5 @@
-function [] = compareSpatialMetrics(groups,labels,colors,fig_path,out_path,pixel_size,fps,M)
-% COMPARESPATIALMETRICS: plot total distance travelled as boxplots for
+function [] = compareSpatialMetricsBeeSwarm(groups,labels,colors,fig_path,out_path,pixel_size,fps,M)
+% COMPARESPATIALMETRICSBEESWARM: plot total distance travelled as boxplots for
 % different groups and example trajectories
 %
 % Input:
@@ -202,15 +202,27 @@ yline(baseline);
 
 % add data
 groupids = unique(grouping);
+data_beeswarm = cell(1,length(groupids));
 for g = 1:(length(groupids)/2)
     c1 = g*2-1;
     c2 = g*2;
-    plot([repmat(c1,1,length(data_tmp(grouping == c1)))+(rand(1,length(data_tmp(grouping == c1)))-0.5)/2;...
-        repmat(c2,1,length(data_tmp(grouping == c2)))+(rand(1,length(data_tmp(grouping == c2)))-0.5)/2],...
-        [data_tmp(grouping == c1)';data_tmp(grouping == c2)'],'-o','MarkerFaceColor','k','Color',[0,0,0,0.2],'MarkerSize',2)
+    data_beeswarm{c1} = data_tmp(grouping == c1);
+    data_beeswarm{c2} = data_tmp(grouping == c2);
+end
+hold on 
+[~,PS] = plotSpread(data_beeswarm,'distributionColors','k','SpreadWidth',3);
+for g = 1:(length(groupids)/2)
+    c1 = g*2-1;
+    c2 = g*2;
+    data1 = PS(PS(:,1) > (c1-0.5) & PS(:,1) < (c1+0.5),:);
+    data2 = PS(PS(:,1) > (c2-0.5) & PS(:,1) < (c2+0.5),:);
+    for i = 1:size(data1,1)
+        plot([data1(i,1),data2(i,1)],[data1(i,2),data2(i,2)],'Color',[0,0,0,0.2])
+    end
     hold on
 end
 
+xlim([0.5,10.5])
 ylims = [25 150];
 ylim(ylims)
 

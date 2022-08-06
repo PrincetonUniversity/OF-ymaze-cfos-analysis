@@ -1,4 +1,4 @@
-function [] = plotHabituation(groups,labels,colors,fig_path,out_path,MSortedLabels,fps,M)
+function [] = plotHabituation2(groups,labels,colors,fig_path,out_path,MSortedLabels,fps,M)
 % PLOTHABITUATION: plot fraction to be in a behavior over time 
 %
 % Input:
@@ -16,6 +16,8 @@ if ~exist(fig_path,'dir')
 end
 
 %% load data for the groups
+
+n_bins = 10;
 
 wrAll = cell(1,length(groups));
 for g = 1:length(groups)
@@ -40,6 +42,7 @@ prob_per_ints_mean_All = cell(1,length(groups));
 prob_per_ints_SE_All = cell(1,length(groups));
 prob_per_ints_STD_All = cell(1,length(groups));
 prob_per_ints_All = cell(1,length(groups));
+nframes_per_ints_All = cell(1,length(groups));
 
 for g = 1:length(groups)
     wr = wrAll{g};
@@ -51,46 +54,51 @@ for g = 1:length(groups)
     prob_per_ints_STD = cell(1,ndays);
     n_mice_all = cell(1,ndays);
     prob_per_ints = cell(1,ndays);
+    nframes_per_ints = cell(1,ndays);
     for i = 1:ndays
         n_mice = size(wr{i},1);
-        prob_per_ints_mean_tmp = zeros(M,length(1:1000:size(wr{i},2)));
-        prob_per_ints_SE_tmp = zeros(M,length(1:1000:size(wr{i},2)));
-        prob_per_ints_STD_tmp = zeros(M,length(1:1000:size(wr{i},2)));
-        prob_per_ints_tmp = cell(1,length(1:1000:size(wr{i},2)));
-        c = 1;
-        for j = 1:1000:size(wr{i},2) % for some time points
-            wr_tmp = wr{i}(:,max([j-10000,1]):min([j+10000,size(wr{i},2)]));
+        tps = linspace(0,size(wr{i},2),n_bins);
+        prob_per_ints_mean_tmp = zeros(M,length(tps)-1);
+        prob_per_ints_SE_tmp = zeros(M,length(tps)-1);
+        prob_per_ints_STD_tmp = zeros(M,length(tps)-1);
+        prob_per_ints_tmp = cell(1,length(tps)-1);
+        nframes_per_ints_tmp = cell(1,length(tps)-1);    
+        for j = 1:(numel(tps)-1)
+            wr_tmp = wr{i}(:,(round(tps(j))+1):round(tps(j+1)));
             N_array = zeros(n_mice,M);
             for m = 1:n_mice % for all mice
                 N_array(m,:) = histcounts(wr_tmp(m,:),'BinMethod','integers','Normalization','probability','BinLimits',[1,M]);
             end
-            prob_per_ints_mean_tmp(:,c) = mean(N_array,1)';
-            prob_per_ints_SE_tmp(:,c) = std(N_array,0,1)'/sqrt(n_mice);
-            prob_per_ints_STD_tmp(:,c) = std(N_array,0,1)';
-            prob_per_ints_tmp{c} = N_array;
-            c = c+1;
+            prob_per_ints_mean_tmp(:,j) = mean(N_array,1)';
+            prob_per_ints_SE_tmp(:,j) = std(N_array,0,1)'/sqrt(n_mice);
+            prob_per_ints_STD_tmp(:,j) = std(N_array,0,1)';
+            prob_per_ints_tmp{j} = N_array;
+            nframes_per_ints_tmp{j} = size(wr_tmp,2);
         end
         n_mice_all{i} = n_mice;
         prob_per_ints_mean{i} = prob_per_ints_mean_tmp;
         prob_per_ints_SE{i} = prob_per_ints_SE_tmp;
         prob_per_ints_STD{i} = prob_per_ints_STD_tmp;
         prob_per_ints{i} = prob_per_ints_tmp;
+        nframes_per_ints{i} = nframes_per_ints_tmp;
     end
     prob_per_ints_mean_All{g} = prob_per_ints_mean;
     prob_per_ints_SE_All{g} = prob_per_ints_SE;
     prob_per_ints_STD_All{g} = prob_per_ints_STD;
     prob_per_ints_All{g} = prob_per_ints;
+    nframes_per_ints_All{g} = nframes_per_ints;
 end
 
 %% export fast locomotion data for analysis in R
-data_fast_loco = struct('group','','day','','time','','mouseID','','prob','');
+data_fast_loco = struct('group','','day','','time','','mouseID','','prob','','nframes','');
 c = 1;
 for g = 1:numel(prob_per_ints_All)
     for d = 1:numel(prob_per_ints_All{g})
         for t = 1:numel(prob_per_ints_All{g}{d})
             for n = 1:size(prob_per_ints_All{g}{d}{t},1)
                 data_fast_loco(c) = struct('group',groups{g},'day',d,'time',t,...
-                    'mouseID',n,'prob',prob_per_ints_All{g}{d}{t}(n,M));
+                    'mouseID',n,'prob',prob_per_ints_All{g}{d}{t}(n,M),...
+                    'nframes',nframes_per_ints_All{g}{d}{t});
                 c = c + 1;
             end
         end
@@ -131,7 +139,9 @@ for gs = 1:length(groups_sets)
                 mean_val = prob_per_ints_mean_All{g}{d}(cluster,:)';
                 SE_val = prob_per_ints_SE_All{g}{d}(cluster,:)';
                 
-                xplot = ((1:1000:size(wr{d},2))/fps/60)'; % time points for plotting (in minutes)
+                % xplot = ((1:1000:size(wr{d},2))/fps/60)'; % time points for plotting (in minutes)
+                tps = linspace(1,size(wr{d},2),n_bins);
+                xplot = mean([tps(1:end-1);tps(2:end)],1)'/fps/60;
                 if d == 1
                     plot(xplot,mean_val,':','color',colors{g},'MarkerSize',10,'LineWidth',0.5);
                 else
@@ -155,7 +165,7 @@ for gs = 1:length(groups_sets)
         prepfig()
     end
     ylabel(t,'fraction of time in behavior','Fontsize',label_font_size)
-    fig_name = [fig_path 'Habituation_' labels{groups_sets{gs}(1)} '_vs_' labels{groups_sets{gs}(2)} '.pdf'];
+    fig_name = [fig_path 'Habituation_' labels{groups_sets{gs}(1)} '_vs_' labels{groups_sets{gs}(2)} '_v2.pdf'];
     print(h,fig_name,'-dpdf','-r0');
     close(h)
 end
@@ -180,7 +190,9 @@ for g = 1:numel(groups)
             mean_val = prob_per_ints_mean_All{g}{d}(cluster,:)';
             SE_val = prob_per_ints_SE_All{g}{d}(cluster,:)';
             
-            xplot = ((1:1000:size(wr{d},2))/fps/60)'; % time points for plotting (in minutes)
+            %xplot = ((1:1000:size(wr{d},2))/fps/60)'; % time points for plotting (in minutes)
+            tps = linspace(1,size(wr{d},2),n_bins);
+            xplot = mean([tps(1:end-1);tps(2:end)],1)'/fps/60;
             if d == 1
                 plot(xplot,mean_val,':','color',colors{1},'MarkerSize',10,'LineWidth',0.5);
             else
@@ -203,7 +215,7 @@ for g = 1:numel(groups)
         prepfig()
     end
     ylabel(t,'fraction of time in behavior','Fontsize',label_font_size)
-    fig_name = [fig_path 'Habituation_' labels{g} '.pdf'];
+    fig_name = [fig_path 'Habituation_' labels{g} '_v2.pdf'];
     print(h,fig_name,'-dpdf','-r0');
     close(h)
 end
@@ -227,7 +239,9 @@ for g = [1 2 4 5 3] %[1 2] % CNO only and Lobule VI
         mean_val = prob_per_ints_mean_All{g}{d}(cluster,:)';
         error_val = prob_per_ints_STD_All{g}{d}(cluster,:)';
         
-        xplot = ((1:1000:size(wr{d},2))/fps/60)'; % time points for plotting (in minutes)
+        %xplot = ((1:1000:size(wr{d},2))/fps/60)'; % time points for plotting (in minutes)
+        tps = linspace(1,size(wr{d},2),n_bins);
+        xplot = mean([tps(1:end-1);tps(2:end)],1)'/fps/60;
         if d == 1
             plot(xplot,mean_val,':','color',colors{1},'MarkerSize',10,'LineWidth',0.5);
         else
@@ -254,7 +268,7 @@ end
 ylabel(t,'Probability to be in fast locomotion','Fontsize',label_font_size)
 
 %%
-fig_name = [fig_path 'Figure_change_of_fast_locomotion_over_time.pdf'];
+fig_name = [fig_path 'Figure_change_of_fast_locomotion_over_time_v2.pdf'];
 exportgraphics(h,fig_name)
 close(h)
 

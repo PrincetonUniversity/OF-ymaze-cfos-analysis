@@ -37,6 +37,20 @@ for g = 1:length(groups)
     probs_all{g} = probs;
 end
 
+%% save the data in a table
+T = table();
+for i = 1:numel(probs_all)
+    data_tmp = probs_all{i};
+    for j = 1:size(data_tmp,1)
+        data_tmp2 = data_tmp(j,:);
+        for k = 1:M
+            T = [T;table(groups(i),j,MSortedLabels(k),data_tmp2{1}(k),data_tmp2{2}(k))];
+        end
+    end
+end
+T.Properties.VariableNames = {'Group','Mouse_ID','Behavior','Day1','Day2'};
+writetable(T,'time_spent_in_behavior_all_groups.csv')
+
 %% calculate compositional means
 
 comp_means = cell(length(groups),2);

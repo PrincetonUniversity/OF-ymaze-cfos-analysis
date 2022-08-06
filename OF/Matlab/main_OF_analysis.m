@@ -76,7 +76,7 @@ labels = {'Control','Lobule VI','Bilateral Crus I','Crus I Left','Crus I Right'}
 colors_behaviors = [102,194,165;252,141,98;141,160,203;231,138,195;166,216,84;179,179,179;120,120,120;80,80,80]./255;
 
 %% Figure 2A: Total distance travelled
-compareSpatialMetrics(groups,labels,colors,fig_path,out_path,pixel_size,fps,6)
+compareSpatialMetricsBeeSwarm(groups,labels,colors,fig_path,out_path,pixel_size,fps,6)
 
 %% Figure 2B: Mouse in OF with body parts labelled, ethogram
 % Part 1: visualize pose tracking
@@ -95,7 +95,8 @@ exampleEthogram(group,day,mouse,fig_path,out_path,MSortedLabels,M,fps)
 
 %% Figure 2C: Temporal change of fraction in behavior
 colors2 = {[0 0 0],[228,26,28]/255,[247 148 29]/255,[77,175,74]/255,[55,126,184]/255};
-plotHabituation(groups,labels,colors2,[fig_path 'Main_Figure/'],out_path,MSortedLabels,fps,M)
+%plotHabituation(groups,labels,colors2,[fig_path 'Main_Figure/'],out_path,MSortedLabels,fps,M)
+plotHabituation2(groups,labels,colors2,[fig_path 'Main_Figure/'],out_path,MSortedLabels,fps,M)
 %plotHabituationControls(control_groups,control_labels,colors,[fig_path 'Additional_Figures/'],out_path,MSortedLabels,fps,M)
 
 %% Figure 2D: Comparison of fractions in behaviors on day 1, day 2 and day 1 vs day 2

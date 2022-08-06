@@ -55,4 +55,5 @@ This work is published under the MIT license.
 3. Gordon J. Berman, Daniel M. Choi, William Bialek, and Joshua W. Shaevitz. Mapping the stereotyped behaviour of freely moving fruit flies. Journal of The Royal Society Interface 11, 20140672 (2014).
 4. Pisano, Thomas J., Zahra M. Dhanerawala, Mikhail Kislin, Dariya Bakshinskaya, Esteban A. Engel, Junuk Lee, Nina L. de Oude et al. "Parallel organization of cerebellar pathways to sensorimotor, associative, and modulatory forebrain." bioRxiv (2020). https://www.biorxiv.org/content/10.1101/2020.03.06.979153v1
 5. Renier, Nicolas, Eliza L. Adams, Christoph Kirst, Zhuhao Wu, Ricardo Azevedo, Johannes Kohl, Anita E. Autry et al. "Mapping of brain activity by automated volume analysis of immediate early genes." Cell 165, no. 7 (2016): 1789-1802.
+6. Jonas (2022). plot spread points (beeswarm plot) (https://www.mathworks.com/matlabcentral/fileexchange/37105-plot-spread-points-beeswarm-plot), MATLAB Central File Exchange. Retrieved May 2, 2022. 
 
